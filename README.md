@@ -5,7 +5,11 @@
 ### algorithm 
 这里主要存放跟算法相关的学习笔记和代码
 #### sort 排序算法
-1. 快速排序
+1. [快速排序]: https://github.com/hsamgle/study/tree/master/algorithm/sort
+
 2. 
 #### hash 算法
 
+1. [一致性哈希Java实现]: https://github.com/hsamgle/study/tree/master/algorithm/hash
+
+   
