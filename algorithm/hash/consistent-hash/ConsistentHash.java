@@ -17,13 +17,13 @@ public class ConsistentHash {
     /** 均衡因子数 */
     private int virtualFactor;
 
-
-    private TreeMap<Integer,Node> cicle;
+    /** 用来记录节点分布的信息 */
+    private TreeMap<Integer,Node> ring;
 
 
     public ConsistentHash(int virtualFactor) {
         this.virtualFactor = virtualFactor<1?1:virtualFactor;
-        this.cicle = new TreeMap<>();
+        this.ring = new TreeMap<>();
     }
 
 
@@ -41,7 +41,7 @@ public class ConsistentHash {
             addFakeNode(node);
 
             int hashCode = hash(node.getIp());
-            cicle.put(hashCode, node);
+            ring.put(hashCode, node);
         }
 
     }
@@ -59,7 +59,7 @@ public class ConsistentHash {
             Node fake = new Node(node.getIp()+i,node.getName()+"#"+i);
             fake.setRef(node);
             int hashCode = hash(fake.getIp());
-            cicle.put(hashCode, fake);
+            ring.put(hashCode, fake);
         }
     }
 
@@ -74,7 +74,7 @@ public class ConsistentHash {
         addFakeNode(node);
 
         int hashCode = hash(node.getIp());
-        cicle.put(hashCode, node);
+        ring.put(hashCode, node);
 
         info();
     }
@@ -89,16 +89,16 @@ public class ConsistentHash {
     public void removeNode(Node node){
 
         int hashCode = hash(node.getIp());
-        Node removeNode = cicle.remove(hashCode);
+        Node removeNode = ring.remove(hashCode);
         if(removeNode!=null){
             // 移除物理节点后，同时需要将虚拟节点也一并移除
-            List<Integer> removeCodes = cicle.values().stream().filter(n -> {
+            List<Integer> removeCodes = ring.values().stream().filter(n -> {
                 Node ref = n.getRef();
                 return ref != null && ref.equals(node);
             }).map(Node::hashCode)
                     .collect(Collectors.toList());
             for (Integer code : removeCodes) {
-                cicle.remove(code);
+                ring.remove(code);
             }
         }
         info();
@@ -114,9 +114,9 @@ public class ConsistentHash {
     public void info(){
 
         StringBuilder builder = new StringBuilder();
-        builder.append("当前节点数为: ").append(cicle.size()).append("\n");
+        builder.append("当前节点数为: ").append(ring.size()).append("\n");
         builder.append("分别为: ").append("\n");
-        for (Map.Entry<Integer, Node> entry : cicle.entrySet()) {
+        for (Map.Entry<Integer, Node> entry : ring.entrySet()) {
             Node node = entry.getValue();
             builder.append("Node: ")
                     .append(entry.getKey())
@@ -145,12 +145,12 @@ public class ConsistentHash {
 
         System.out.println("key "+key+" 对应的hashCode " + hashCode);
         // 这里找出比当前hash值大的map
-        SortedMap<Integer, Node> sortedMap = cicle.tailMap(hashCode);
+        SortedMap<Integer, Node> sortedMap = ring.tailMap(hashCode);
         if(!sortedMap.isEmpty()){
-            return cicle.get(sortedMap.firstKey());
+            return ring.get(sortedMap.firstKey());
         }
         // 如果找不到的话，就默认取第一个节点，这个目的是为了实现闭环
-        return cicle.firstEntry().getValue();
+        return ring.firstEntry().getValue();
     }
 
 
